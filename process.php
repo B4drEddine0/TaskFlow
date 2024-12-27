@@ -1,6 +1,7 @@
 <?php
 require_once 'taskClass.php';
 require_once 'bugClass.php';
+require_once 'featureClass.php';
 
 if($_SERVER['REQUEST_METHOD'] == 'POST') {
     $title = $_POST['title'];
@@ -19,6 +20,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
         $task->setCritere($_POST['critere']);
         $task->AddBug();
 
+    }else if($type == 'Feature'){
+        $task = new feature();
+        $task->setTitle($title);
+        $task->setDescription($description);
+        $task->setStatus($status);
+        $task->setType($type);
+        $task->setAssignedTo($assignedTo);
+        $task->setRequirement($_POST['requirement']);
+        $task->AddFeat();
     } else {
         $task = new Tasks();
         $task->setTitle($title);

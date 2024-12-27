@@ -3,23 +3,23 @@ require_once 'database.php';
 require_once 'taskClass.php';
 
 
-class bug extends Tasks{
+class feature extends Tasks{
 
-    protected $critere;
+    protected $requirement;
 
-    public function setCritere($critere){
-        $this->critere = htmlspecialchars(strip_tags($critere));
+    public function setRequirement($requirement){
+        $this->requirement = htmlspecialchars(strip_tags($requirement));
     }
     
 
-    public function AddBug(){  
+    public function AddFeat(){  
             parent::AddTask();
             $lastTaskId = $this->db->lastInsertId();
             
-            $query = 'insert into bug (critere, task_id) values (:critere, :task_id)';
+            $query = 'insert into feature (requirement, task_id) values (:requirement, :task_id)';
             $stmt = $this->db->prepare($query);
 
-            $stmt->bindParam(':critere', $this->critere);
+            $stmt->bindParam(':requirement', $this->requirement);
             $stmt->bindParam(':task_id', $lastTaskId);
             
             if($stmt->execute()) {

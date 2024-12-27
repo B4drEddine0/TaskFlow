@@ -1,3 +1,9 @@
+<?php
+require_once 'taskClass.php';
+$taskManager = new Tasks();
+$users = $taskManager->getUsers();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -94,9 +100,14 @@
                         <select 
                             id="assign_to" 
                             name="assign_to"
+                            required
                             class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Select User</option>
-                            <option value="user1">John Doe</option>
+                            <?php foreach($users as $user): ?>
+                                <option value="<?php echo htmlspecialchars($user['username']); ?>">
+                                    <?php echo htmlspecialchars($user['username'] . ' (' . $user['email'] . ')'); ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 

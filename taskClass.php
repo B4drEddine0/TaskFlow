@@ -59,7 +59,7 @@ class Tasks{
     }
 
     public function GetTasks(){
-        $query = "SELECT title, taskDescription, statut, createdAt FROM task WHERE user_id = :user_id";
+        $query = "SELECT task_id, title, taskDescription, statut, taskType, createdAt FROM task WHERE user_id = :user_id";
 
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
@@ -70,21 +70,77 @@ class Tasks{
                 $title = htmlspecialchars($row['title']);
                 $description = htmlspecialchars($row['taskDescription']);
                 $status = htmlspecialchars($row['statut']);
+                $type = htmlspecialchars($row['taskType']);
                 $createdAt = htmlspecialchars($row['createdAt']);
                 
-                echo '<div class="bg-white rounded-lg shadow p-6">';
+                // Define border color based on task type
+                $borderColor = match($type) {
+                    'Bug' => 'border-red-500',
+                    'Feature' => 'border-blue-500',
+                    default => 'border-gray-200'
+                };
+                
+                echo '<div class="bg-white rounded-lg shadow p-6 border-l-4 ' . $borderColor . '">';
                 echo '    <div class="flex justify-between items-start mb-4">';
                 echo '        <h3 class="text-lg font-medium text-gray-900">' . $title . '</h3>';
-                echo '        <span class="px-2 py-1 text-sm rounded-full bg-yellow-100 text-yellow-800">' . $status . '</span>';
+                echo '        <div class="flex items-center space-x-2">';
+                echo '            <span class="text-sm text-gray-500">' . $type . '</span>';
+                echo '            <form action="tasks.php" method="POST" class="inline">';
+                echo '                <input type="hidden" name="task_id" value="' . $row['task_id'] . '">';
+                echo '                <select name="status" onchange="this.form.submit()" 
+                                    class="px-2 py-1 text-sm rounded-full border ' . 
+                                    ($status === 'todo' ? 'bg-gray-100 text-gray-800' : 
+                                    ($status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' : 
+                                        'bg-green-100 text-green-800')) . '">';
+                echo '                    <option value="todo" ' . ($status === 'todo' ? 'selected' : '') . '>To Do</option>';
+                echo '                    <option value="in-progress" ' . ($status === 'in-progress' ? 'selected' : '') . '>In Progress</option>';
+                echo '                    <option value="done" ' . ($status === 'done' ? 'selected' : '') . '>Done</option>';
+                echo '                </select>';
+                echo '            </form>';
+                echo '        </div>';
                 echo '    </div>';
                 echo '    <p class="text-gray-600 mb-4">' . $description . '</p>';
                 echo '    <div class="flex justify-between items-center text-sm text-gray-500">';
-                echo '        <span>Due: ' . date('M d, Y', strtotime($createdAt)) . '</span>';
-                echo '        <button class="text-indigo-600 hover:text-indigo-800">View Details</button>';
+                echo '        <span>Created: ' . date('M d, Y', strtotime($createdAt)) . '</span>';
+                echo '        <a href="details.php?id=' . $row['task_id'] . '" class="text-indigo-600 hover:text-indigo-800">View Details</a>';
                 echo '    </div>';
                 echo '</div>';
             }}
     }
 
+        public function getTaskDetails($taskId) {
+            $query = "SELECT t.*, b.critere, f.requirement 
+                    FROM task t 
+                    LEFT JOIN bug b ON t.task_id = b.task_id 
+                    LEFT JOIN feature f ON t.task_id = f.task_id 
+                    WHERE t.task_id = :task_id AND t.user_id = :user_id";
+                    
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':task_id', $taskId, PDO::PARAM_INT);
+            $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+    public function getUsers() {
+        $query = "SELECT user_id, username, email FROM user";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function updateStatus($taskId, $newStatus) {
+        $query = "UPDATE task SET statut = :status WHERE task_id = :task_id AND user_id = :user_id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':status', $newStatus);
+        $stmt->bindParam(':task_id', $taskId, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 }
+
+
+    
+
 ?>
