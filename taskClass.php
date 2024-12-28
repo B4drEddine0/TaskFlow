@@ -59,6 +59,13 @@ class Tasks{
     }
 
     public function GetTasks(){
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id']) && isset($_POST['status'])) {
+            if($this->updateStatus($_POST['task_id'], $_POST['status'])) {
+                header('Location: tasks.php');
+                exit();
+            }
+        }
+
         $query = "SELECT task_id, title, taskDescription, statut, taskType, createdAt FROM task WHERE user_id = :user_id";
 
         $stmt = $this->db->prepare($query);
@@ -73,7 +80,6 @@ class Tasks{
                 $type = htmlspecialchars($row['taskType']);
                 $createdAt = htmlspecialchars($row['createdAt']);
                 
-                // Define border color based on task type
                 $borderColor = match($type) {
                     'Bug' => 'border-red-500',
                     'Feature' => 'border-blue-500',
@@ -131,12 +137,20 @@ class Tasks{
     }
 
     public function updateStatus($taskId, $newStatus) {
-        $query = "UPDATE task SET statut = :status WHERE task_id = :task_id AND user_id = :user_id";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':status', $newStatus);
-        $stmt->bindParam(':task_id', $taskId, PDO::PARAM_INT);
-        $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
-        return $stmt->execute();
+            $query = "UPDATE task 
+                     SET statut = :status 
+                     WHERE task_id = :task_id 
+                     AND user_id = :user_id";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':status', $newStatus);
+            $stmt->bindParam(':task_id', $taskId, PDO::PARAM_INT);
+            $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+
+            if($stmt->execute()) {
+                return true;
+            }
+            return false;
     }
 }
 
